@@ -18,8 +18,10 @@ class Draw2D
         static void setPixel(SDL_Surface *screen, int x, int y, Uint8 R=255, Uint8 G=255, Uint8 B=255);
         static void setPixel(SDL_Surface *screen, Point2D _pt, Uint8 R=255, Uint8 G=255, Uint8 B=255);
         static void setWhitePixel(SDL_Surface *screen, int x, int y);
+        static Point3D lookatVector();
 
-        static bool modelview(Point3D &_pt);
+        static void geometryTransformation(Point3D &_pt);
+        static bool modelview(Point3D &_pt);;
         static Point2D project(const Point3D &_pt);
         static Point3D camera;
         static Point2D center;
@@ -31,6 +33,11 @@ class Draw2D
         static float f;
         static float dx;
         static float dy;
+
+        static float miniLine;
+        static float totoX;
+        static float totoY;
+        static float totoZ;
 
         static void setXangle(float _angle);
         static void setYangle(float _angle);

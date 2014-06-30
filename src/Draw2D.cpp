@@ -9,11 +9,13 @@ Point2D Draw2D::center(640/2,480/2);
 float Draw2D::xangle = 0;
 float Draw2D::yangle = 0;
 float Draw2D::zangle = 0;
-float Draw2D::far = 190;
-float Draw2D::near = 0.01;
-float Draw2D::f = 470;
+float Draw2D::far = -300;
+float Draw2D::near = -10.0;
+float Draw2D::f = 320;
 float Draw2D::dx = 1;
 float Draw2D::dy = 1;
+
+float Draw2D::miniLine = 0.9;
 
 
 void Draw2D::drawSegment(SDL_Surface *screen,int x0, int y0, int x1, int y1, Uint8 r, Uint8 g, Uint8 b)
@@ -63,55 +65,44 @@ void Draw2D::drawSegment(SDL_Surface *screen,int x0, int y0, int x1, int y1, Uin
     }
 }
 
-bool Draw2D::modelview(Point3D &_pt)
+Point3D Draw2D::lookatVector()
+{
+    Point3D pt = Point3D(0,0,-1);
+
+    pt.rotation(Point3D(0,1,0),-yangle);
+    pt.rotation(Point3D(1,0,0),xangle);
+    pt.rotation(Point3D(0,0,1),zangle);
+    return pt;
+
+}
+
+void Draw2D::geometryTransformation(Point3D &_pt)
 {
     _pt = _pt-camera;
     //order is important
+    _pt.rotation(Point3D(0,0,1),zangle);
     _pt.rotation(Point3D(0,1,0),yangle);
     _pt.rotation(Point3D(1,0,0),xangle);
-    _pt.rotation(Point3D(0,0,1),zangle);
 
     _pt.w = -_pt.z;
+}
 
-    //projection matrix source : http://www.songho.ca/opengl/gl_projectionmatrix.html
-    // whithout this code near plan isnt take in consideration BUT NOT FAR !!!
-    Point3D test = _pt;// test should be replace with newPoint
-    test.x *= near/center.x;
-    test.y *= near/center.y;
-    test.z = (test.z*((-far+near)/(far-near))+((-2*far*near)/(far-near)));
-//
-//    test = test / test.w; // normilize
-    //clip the point
-//    if(test.x > _pt.w && test.x < -_pt.w &&
-//       test.y > _pt.w && test.y < -_pt.w &&
-//       test.z > _pt.w && test.z < -_pt.w )
-//    {
-//        return true;
-//    }
-//    if(test.x > _pt.w) { test.x =  _pt.w;}
-//    if (test.x < -_pt.w) {_pt.x = -_pt.w;}
-//    if (test.y > _pt.w) {_pt.y = _pt.w;}
-//    if (test.y < -_pt.w) {_pt.y = -_pt.w;}
-//    if (test.z > _pt.w) {_pt.z = _pt.w;}
-//    if (test.z < -_pt.w) {_pt.z = -_pt.w;}
-
-    if(test.x > _pt.w || test.x < -_pt.w ||
-       test.y > _pt.w || test.y < -_pt.w ||
-       test.z > _pt.w || test.z < -_pt.w )
-    {
-        return true;
-    }
-    return false;
-
+bool Draw2D::modelview(Point3D &_pt)
+{
+    return _pt.z<near;
 }
 
 Point2D Draw2D::project(const Point3D &_pt)
 {
     Point3D newPoint = _pt;
+    Point2D result;
 
-//    newPoint = newPoint/newPoint.w;
+    if(newPoint.z<0.1 && newPoint.z>-0.1){
+        result = Point2D(newPoint.x,newPoint.y);
+    }else{
+        result = Point2D(newPoint.x/(newPoint.z),newPoint.y/(newPoint.z));//
+    }
 
-    Point2D result(newPoint.x/(newPoint.z+0.1),newPoint.y/(newPoint.z+0.1));// + 0.1 prevent the 0 division
     result = result*f;
     result.x = result.x/dx;
     result.y = result.y/dy;
@@ -121,77 +112,34 @@ Point2D Draw2D::project(const Point3D &_pt)
 
 void Draw2D::drawSegment(SDL_Surface *screen,Point3D _ptA, Point3D _ptB, Uint8 r, Uint8 g, Uint8 b)
 {
-//    Point2D ptA = _ptA.convertPerspective();
-//    Point2D ptB = _ptB.convertPerspective();
-
-        // camera pin hole
-
     bool ptAOut = false, ptBOut = false;
 
     Point3D ptA = _ptA;
-    ptAOut = modelview(ptA);
+    geometryTransformation(ptA);
+    ptAOut = !modelview(ptA);
 
     Point3D ptB = _ptB;
-    ptBOut = modelview(ptB);
+    geometryTransformation(ptB);
+    ptBOut = !modelview(ptB);
 
-    if(ptAOut && ptBOut) {return;}
+    if(ptAOut && ptBOut){return;}
 
-    if (ptAOut && !ptBOut)// A is out
+    float threahold = 1.0;
+
+    if (ptAOut )// A is out
     {
-        char lrbtnf = 0b000000;
-
-        if (ptA.x < 0) { lrbtnf += 0b100000;}
-        if (ptA.w - ptA.x < 0) { lrbtnf += 0b010000;}
-        if (ptA.y < 0) { lrbtnf += 0b001000;}
-        if (ptA.w - ptA.y < 0) { lrbtnf += 0b000100;}
-        if (ptA.z < 0) { lrbtnf += 0b000010;}
-        if (ptA.w - ptA.z < 0) { lrbtnf += 0b000001;}
-
-        // maybe put some if here, check on which plan the point is out and then make the project on the plane
-        if(ptA.w+ptA.x<=0)
-        {
-            float a = (ptA.w+ptA.x)/((ptA.w+ptA.x)-(ptB.w+ptB.x));
-            ptA = ptA*(1.0-a)+ptB*a;
-        }
-        if(ptA.w-ptA.x<=0)
-        {
-            float a = (ptA.w-ptA.x)/((ptA.w-ptA.x)-(ptB.w-ptB.x));
-            ptA = ptA*(1.0-a)+ptB*a;
-        }
-        if(ptA.w+ptA.y<=0)
-        {
-            float a = (ptA.w+ptA.y)/((ptA.w+ptA.y)-(ptB.w+ptB.y));
-            ptA = ptA*(1.0-a)+ptB*a;
-        }
-        if(ptA.w-ptA.y<=0)
-        {
-            float a = (ptA.w-ptA.y)/((ptA.w-ptA.y)-(ptB.w-ptB.y));
-            ptA = ptA*(1.0-a)+ptB*a;
-        }
-
+        Point3D ptBA = ptA-ptB;
+        if (ptBA.z<threahold&&ptBA.z>-threahold) { ptBA.z = threahold; }
+        float t = (near-ptB.z)/ptBA.z;
+        ptA = ptB + ptBA*t;
     }
-    else if (!ptAOut && ptBOut)// B is out
+
+    if ( ptBOut)// B is out
     {
-        if(ptB.w+ptB.x<=0)
-        {
-            float a = (ptB.w+ptB.x)/((ptB.w+ptB.x)-(ptA.w+ptA.x));
-            ptB = ptB*(1.0-a)+ptA*a;
-        }
-        if(ptB.w-ptB.x<=0)
-        {
-            float a = (ptB.w-ptB.x)/((ptB.w-ptB.x)-(ptA.w-ptA.x));
-            ptB = ptB*(1.0-a)+ptA*a;
-        }
-        if(ptB.w-ptB.y<=0)
-        {
-            float a = (ptB.w-ptB.y)/((ptB.w-ptB.y)-(ptA.w-ptA.y));
-            ptB = ptB*(1.0-a)+ptA*a;
-        }
-        if(ptB.w+ptB.y<=0)
-        {
-            float a = (ptB.w+ptB.y)/((ptB.w+ptB.y)-(ptA.w+ptA.y));
-            ptB = ptB*(1.0-a)+ptA*a;
-        }
+        Point3D ptAB = ptB-ptA;
+        if (ptAB.z<threahold&&ptAB.z>-threahold) { ptAB.z = threahold; }
+        float t = (near-ptA.z)/ptAB.z;
+        ptB = ptA + ptAB*t;
     }
 
     Point2D result1 = project(ptA);

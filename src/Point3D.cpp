@@ -107,7 +107,7 @@ void Point3D::rotation(Point3D _axe, float _angle)
 
 float Point3D::length()
 {
-    return sqrt(x*x+y*y+z*z);
+    return sqrt(abs(x*x+y*y+z*z));
 }
 
 Point3D Point3D::normalize()
@@ -135,6 +135,11 @@ Point3D mult44(Point3D _pt, float _mat[4][4])
     float y = _pt.x*_mat[0][1]+_pt.y*_mat[1][1]+_pt.z*_mat[2][1]+_mat[3][1];
     float z = _pt.x*_mat[0][2]+_pt.y*_mat[1][2]+_pt.z*_mat[2][2]+_mat[3][2];
     return Point3D(x,y,z);
+}
+
+float Point3D::dot(Point3D _pt)
+{
+    return x*_pt.x+y*_pt.y+z*_pt.z;
 }
 
 float degtorad(const float &angle) { return 3.14 * angle / 180.0; }

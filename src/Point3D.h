@@ -28,6 +28,7 @@ class Point3D
         Point3D cross(Point3D _pt);
         Point3D mulMat43(float matrix[4][3]); // uglyname
         void rotation(Point3D _axe, float _angle);
+        float dot(Point3D _pt);
         Point2D convertPerspective();// static matrix in it
 
         float getX() {return x;};

@@ -43,6 +43,7 @@ int main ( int argc, char** argv )
     }
 
     SDL_EnableKeyRepeat(1,1);
+    SDL_ShowCursor(0);
 
     // start cube element
     int origin = 200;
@@ -91,36 +92,28 @@ int main ( int argc, char** argv )
                     {
                     case SDLK_ESCAPE: done = true; break;
 
-                    case SDLK_LEFT: Draw2D::xangle+=0.01; break;
-
-                    case SDLK_RIGHT: Draw2D::xangle-=0.01; break;
-
-                    case SDLK_UP: Draw2D::yangle+=0.01; break;
-
-                    case SDLK_DOWN: Draw2D::yangle-=0.01; break;
-
                     case SDLK_w:
-                        cameraDirection = Point3D (0,0,-10);
+                        cameraDirection = Point3D (0,0,-1);
                         cameraDirection.rotation(Point3D(1,0,0),-Draw2D::xangle);// x/y angle order important
                         cameraDirection.rotation(Point3D(0,1,0),-Draw2D::yangle);
                         Draw2D::camera = Draw2D::camera+cameraDirection;
                         break;
 
                     case SDLK_s:
-                        cameraDirection = Point3D (0,0,-10);
+                        cameraDirection = Point3D (0,0,-1);
                         cameraDirection.rotation(Point3D(1,0,0),-Draw2D::xangle); // x/y angle order important
                         cameraDirection.rotation(Point3D(0,1,0),-Draw2D::yangle);
                         Draw2D::camera = Draw2D::camera-cameraDirection;
                         break;
 
                     case SDLK_a:
-                        cameraDirection = Point3D (0,0,-10);
+                        cameraDirection = Point3D (0,0,-1);
                         cameraDirection.rotation(Point3D(0,1,0),-Draw2D::yangle-3.14/2);
                         Draw2D::camera = Draw2D::camera+cameraDirection;
                         break;
 
                     case SDLK_d:
-                        cameraDirection = Point3D (0,0,-10);
+                        cameraDirection = Point3D (0,0,-1);
                         cameraDirection.rotation(Point3D(0,1,0),-Draw2D::yangle+3.14/2);
                         Draw2D::camera = Draw2D::camera+cameraDirection;
                         break;
@@ -130,67 +123,17 @@ int main ( int argc, char** argv )
                     case SDLK_n: Draw2D::near-=1; break;
 
                     //debug
-                    case SDLK_p:
-                        vectorDebug=1;
-                        angleDebug=1;
-                        debug = &Draw2D::camera;
-                        break;
-
-                    //debug
                     case SDLK_SPACE:
                         Draw2D::camera.y+=1;// juste for debug
                         break;
 
-                    case SDLK_RETURN:
-                        Draw2D::camera = Point3D(225.000000, 225.000000, 100.000000);
-                        Draw2D::xangle = 0;
-                        Draw2D::yangle = 0;
-                        Draw2D::zangle = 0;
+                    case SDLK_x:
+                        Draw2D::camera.y-=1;// juste for debug
                         break;
-                    //end debug
-
-//                    case SDLK_o:
-//                        vectorDebug=2;
-//                        angleDebug=0.1;
-//                        debug = &Draw2D::viewerPos;
-//                        break;
-
-//                    case SDLK_i:
-//                        vectorDebug=3;
-//                        angleDebug=0.001;
-//                        debug = &Draw2D::theta;
-//                        break;
 
                     default:
                         break;
-
-                    //end debug
-//                    else if (event.key.keysym.sym == SDLK_w)
-//                        cube.moveZ(-1);
-//                    else if (event.key.keysym.sym == SDLK_s)
-//                        cube.moveZ(1);
                     }
-
-
-                    // cube controle
-//                    else if (event.key.keysym.sym == SDLK_LEFT)
-//                        cube.rotation(Point3D(0,1,0),-0.01);
-//                    else if (event.key.keysym.sym == SDLK_RIGHT)
-//                        cube.rotation(Point3D(0,1,0),+0.01);
-//                    else if (event.key.keysym.sym == SDLK_UP)
-//                        cube.rotation(Point3D(1,0,0),+0.01);
-//                    else if (event.key.keysym.sym == SDLK_DOWN)
-//                        cube.rotation(Point3D(1,0,0),-0.01);
-//                    else if (event.key.keysym.sym == SDLK_d)
-//                        cube.moveX(1);
-//                    else if (event.key.keysym.sym == SDLK_a)
-//                        cube.moveX(-1);
-//                    else if (event.key.keysym.sym == SDLK_w)
-//                        cube.moveZ(-1);
-//                    else if (event.key.keysym.sym == SDLK_s)
-//                        cube.moveZ(1);
-
-
 
                     break;
                 }
@@ -224,9 +167,11 @@ int main ( int argc, char** argv )
             {
                 Point3D ptA(i,0,-1000);
                 Point3D ptB(i,0,1000);
+
                 Draw2D::drawSegment(screen,ptA,ptB);
                 ptA = Point3D (-1000,0,i);
                 ptB = Point3D (1000,0,i);
+
                 Draw2D::drawSegment(screen,ptA,ptB);
             }
 
@@ -240,19 +185,13 @@ int main ( int argc, char** argv )
             Draw2D::drawSegment(screen,ptOrigin1,ptOrigin2,255,0,0);
             Draw2D::drawSegment(screen,ptOrigin1,ptOrigin3,0,255,0);
             Draw2D::drawSegment(screen,ptOrigin1,ptOrigin4,0,0,255);
-
-            // landmark, for no vomite (orthographic part)
-//            Point3D face3D1= (cube.pt2+cube.pt4)/2;
-//            Point2D face2D1 = face3D1.convertPerspective();
-//            Draw2D::setWhitePixel(screen,face2D1.getX(),face2D1.getY());
-
         }
 
         fps++;
         if(SDL_GetTicks()-fpsTime>1000){
             char tampon [30] ;
 
-            sprintf (tampon, "FPS : %d | WSAD move | x:%f y:%f z:%f ", fps,Draw2D::xangle,Draw2D::yangle,Draw2D::zangle) ;
+            sprintf (tampon, "FPS : %d | WSAD move | ESC to quite", fps) ;
             SDL_WM_SetCaption(tampon,NULL);
             fpsTime = SDL_GetTicks();
             fps=0;
